@@ -18,7 +18,7 @@
 
 
 def get_city_code(city_name):
-    """ take city name and return city code"""
+    """ take city name as input and return city code"""
     city_code = ''
     return city_code
 
@@ -30,14 +30,14 @@ def get_hub(city_code):
 
 def get_hub_city_list(hub_code):
     """ take a hub code as input and return back list of cities mapped to the
-    hub"""
+    hub. This should be read from 'CITY_ARRAY' sheet."""
     city_list = "All cities mapped to the hub"
     return city_list
 
 
 def has_route(city_code):
     """ take a city code as input and return True if a route exist for that
-    city else return False"""
+    city else return False. This will be read from 'ROUTE_NAME' sheet."""
     return True
 
 
@@ -65,7 +65,9 @@ def get_hub_difference(origin_hub, dest_hub):
 
 
 def calculate_cpk(amount, weight):
+    """ calculate CPK (Charge Per Kilo)"""
     return float(amount) / float(weight)
+
 
 def main(input_origin, input_destination):
     # get city codes
@@ -110,7 +112,6 @@ def main(input_origin, input_destination):
                     CPK = calculate_cpk(sum(amount), sum(weight)):
                 # HERE IT CONTRADICT, SINCE THE ENTIRE BLOCK RUN WITH
                 # THE ASSUMPTION THAT ORIGIN AND DESTINATION HAS ROUTE
-                # : REFER THIRD IF CONDITION, LINE NUMBER 75
                 else origin_has_route and not dest_has_route:
                     # 'array of all cities that come under get_route_name(input_origin)'
                     if origin_code = origin_route_city_list and dest_code = input_destination:
