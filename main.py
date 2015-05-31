@@ -40,17 +40,32 @@ def has_route(city_code):
     city else return False"""
     return True
 
+
 def get_route_name(city_code):
     """ take city code as input and return the route name it belongs to"""
     route_name = ''
     return route_name
+
 
 def get_route_cities(route_name):
     """ take route name as input and return all cities under that route"""
     return []
 
 
+def get_connected_hubs(hub_code):
+    """ All hubs connected to the hub. Read this from 'HUB_CONNECTED_HUB sheet"""
+    return []
+
+
+def get_hub_difference(origin_hub, dest_hub):
+    """ All hubs connected to the hub(input_destination)} - {All hubs connected
+    to the hub(input_origin)}"""
+    return set(get_connected_hubs(dest_hub)) -
+           set(get_connected_hubs(origin_hub))
+
+
 def main(input_origin, input_destination):
+    CPK = 0
     # get city codes
     origin_code = get_city_code(input_origin)
     dest_code = get_city_code(input_destination)
@@ -71,86 +86,62 @@ def main(input_origin, input_destination):
     # 'array of all cities that come under get_route_name(input_destination)'
     dest_route_city_list = get_route_cities(dest_route_name)
 
+    #{All hubs connected to the hub(input_destination)} - {All hubs connected to the hub(input_origin)}
+    #/* Mutually exclusive concept (A-B)*/
+    destination_hub_connected_hub_array = get_hub_difference(origin_hub,
+                                                             dest_hub)
+    # Basically make an array of all cities that are connected to the hubs in destination_hub_connected_hub_array[]
+    dest_hub_city_list = get_hub_city_list(dest_hub)
+    origin_hub_city_list = get_hub_city_list(origin_hub)
+
     if origin_code not in hub_city_list and dest_code not in hub_city_list:
         if origin_hub = dest_hub:
             if origin_has_route and dest_has_route:
                 if origin_route_name != dest_route_name:
                     # WHAT DEOS THIS MEANS ? IS IT LIKE ORIGIN PART OF ORIGIN
                     # CITY ROUTE LIST ?
-                    if origin = origin_route_city_list and destination = dest_route_city_list:
-                        total_weight=sum(weights);
-                        Total_amount=Sum(amount);
-                        CPK = (total_amount/total_weight);
+                    if origin_code = origin_route_city_list and dest_code = dest_route_city_list:
+                        total_weight=sum(weights)
+                        Total_amount=sum(amount)
+                        CPK = (total_amount/total_weight)
                     else
                         # 'array of all cities that come under get_route_name(input_origin)'
-                        if(origin = origin_route_city_list and destination = city_array[])
-                            total_weight=sum(weights);
-                            Total_amount=Sum(amount);
-                            CPK = (total_amount/total_weight);
+                        if origin_code = origin_route_city_list and dest_code = dest_route_city_list:
+                            total_weight=sum(weights)
+                            Total_amount=sum(amount)
+                            CPK = (total_amount/total_weight)
                         # HERE IT CONTRADICT, SINCE THE ENTIRE BLOCK RUN WITH
                         # THE ASSUMPTION THAT ORIGIN AND DESTINATION HAS ROUTE
-                        # : REFER LINE NUMBER 75
+                        # : REFER THIRD IF CONDITION, LINE NUMBER 75
                         else origin_has_route and not dest_has_route:
                             # 'array of all cities that come under get_route_name(input_origin)'
-                            origin_route_city_list = []
-                            If(origin = origin_route_city_list and destination = input_destination):
-                                total_weight=sum(weights);
-                                Total_amount=Sum(amount);
-                                CPK = (total_amount/total_weight);
-                    elif(has_route(input_origin)=0 and has_route(input_destination)=1)
-                        # 'array of all cities that come under get_route_name(input_origin)'
-                        dest_route_city_list[] = []
-                        if(origin = input_origin and destination = dest_route_city_list[] ):
-                            total_weight=sum(weights);
-                            Total_amount=Sum(amount);
-                            CPK = (total_amount/total_weight);
+                            if origin_code = origin_route_city_list and dest_code = input_destination:
+                                total_weight=sum(weights)
+                                Total_amount=sum(amount)
+                                CPK = (total_amount/total_weight)
+                    elif dest_has_route and not origin_has_route:
+                        if origin_code = origin_route_city_list and dest_code = dest_route_city_list:
+                            total_weight=sum(weights)
+                            Total_amount=sum(amount)
+                            CPK = (total_amount/total_weight)
                 else
-                    #{All hubs connected to the hub(input_destination)} - {All hubs connected to the hub(input_origin)};
-                    #/* Mutually exclusive concept (A-B)*/
-                    Destination_hub_connected_hub_array[] = []
-                    #Basically make an array of all cities that are connected to the hubs in Destination_hub_connected_hub_array[];
-                    Destination_Hub_to_city_array[] = []
-                    #{All hubs connected to the hub(input_origin)} - {All hubs connected to the hub(input_destination)};
-                    #/* Mutually exclusive concept (B-A) */
-                    Origin_hub_connected_hub_array[] = []
-                    # Basically make an array of all cities that are connected to the hubs in Origin_hub_connected_hub_array[];
-                    Origin_Hub_to_city_array[] = []
-                    if(origin = Origin_Hub_to_city_array[] and destination = Destination_Hub_to_city_array[])
-                        total_weight=sum(weights);
-                        Total_amount=Sum(amount);
-                        CPK = (total_amount/total_weight);
-            elif(get_city_code(input_origin) is in get_hub_city_list[] and get_city_code(input_destination) is not in get_hub_city_list[]):
-                # {All hubs connected to the hub(input_origin)} - {All hubs connected to the hub(input_destination)};
-                # /* Mutually exclusive concept (A-B) */
-                Origin_hub_connected_hub_array[] = []
-                # Basically make an array of all cities that are connected to the hubs in Origin_hub_connected_hub_array[];
-                Origin_Hub_to_city_array[] = []
-                if(origin = origin_Hub_to_city_array[] and destination = input_destination)
-                    total_weight=sum(weights);
-                    Total_amount=Sum(amount);
-                    CPK = (total_amount/total_weight);
-            elif(get_city_code(input_origin) is not in get_hub_city_list[] and get_city_code(input_destination) is in get_hub_city_list[]):
-                # {All hubs connected to the hub(input_destination)} - {All hubs connected to the hub(input_origin)};
-                # /* Mutually exclusive concept (B-A) */
-                Destination_hub_connected_hub_array[] = []
-                # Basically make an array of all cities that are connected to the hubs in Destination_hub_connected_hub_array[];
-                Destination_Hub_to_city_array[] = []
-                if(origin = input_origin and destination = Destination_Hub_to_city_array[]):
-                    total_weight=sum(weights);
-                    Total_amount=Sum(amount);
-                    CPK = (total_amount/total_weight);
+                    if origin_code in origin_hub_city_list and dest_code in dest_hub_city_list:
+                        total_weight=sum(weights)
+                        Total_amount=sum(amount)
+                        CPK = (total_amount/total_weight)
+            elif origin_code in origin_hub_city_list and dest_code not in dest_hub_city_list:
+                if origin_code in origin_hub_city_list and dest_code == input_destination:
+                    total_weight=sum(weights)
+                    Total_amount=sum(amount)
+                    CPK = total_amount/total_weight
+            elif origin_code  not in origin_hub_city_list and dest_code in dest_hub_city_list:
+                if origin_code == input_origin and dest_code in dest_hub_city_list:
+                    total_weight = sum(weights)
+                    Total_amount = sum(amount)
+                    CPK = total_amount/total_weight
             else
-                # {All hubs connected to the hub(input_destination)} - {All hubs connected to the hub(input_origin)};
-                # /* Mutually exclusive concept (A-B) */
-                Destination_hub_connected_hub_array[] = []
-                # Basically make an array of all cities that are connected to the hubs in Destination_hub_connected_hub_array[];
-                Destination_Hub_to_city_array[] = []
-                # {All hubs connected to the hub(input_origin)} - {All hubs connected to the hub(input_destination)};
-                # /* Mutually exclusive concept (B-A) */
-                Origin_hub_connected_hub_array[] = []
-                # Basically make an array of all cities that are connected to the hubs in Origin_hub_connected_hub_array[];
-                Origin_Hub_to_city_array[] = []
-                if(origin = Origin_Hub_to_city_array[] and destination = Destination_Hub_to_city_array[]):
-                    total_weight=sum(weights);
-                    Total_amount=Sum(amount);
-                    CPK = (total_amount/total_weight);
+                if origin_code = origin_hub_city_list and dest_code in dest_hub_city_list:
+                    total_weight=sum(weights)
+                    Total_amount=sum(amount)
+                    CPK = (total_amount/total_weight)
+    return CPK
