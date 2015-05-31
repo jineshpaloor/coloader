@@ -58,18 +58,19 @@ def get_connected_hubs(hub_code):
 
 
 def get_hub_difference(origin_hub, dest_hub):
-    """ All hubs connected to the hub(input_destination)} - {All hubs connected
-    to the hub(input_origin)}"""
+    """ take two hub code as inputs and return set difference of connected hubs
+    of those hubs."""
     return set(get_connected_hubs(dest_hub)) -
            set(get_connected_hubs(origin_hub))
 
+
+def calculate_cpk(amount, weight):
+    return float(amount) / float(weight)
 
 def main(input_origin, input_destination):
     # get city codes
     origin_code = get_city_code(input_origin)
     dest_code = get_city_code(input_destination)
-    # get hub city list
-    hub_city_list = get_hub_city_list()
     # get origin and dest hub
     origin_hub = get_hub(input_origin)
     dest_hub = get_hub(input_destination)
@@ -85,16 +86,16 @@ def main(input_origin, input_destination):
     # 'array of all cities that come under get_route_name(input_destination)'
     dest_route_city_list = get_route_cities(dest_route_name)
 
-    #{All hubs connected to the hub(input_destination)} - {All hubs connected to the hub(input_origin)}
-    #/* Mutually exclusive concept (A-B)*/
+    # set difference of connected hubs of origin and destination hubs
     destination_hub_connected_hub_array = get_hub_difference(origin_hub,
                                                              dest_hub)
-    # Basically make an array of all cities that are connected to the hubs in destination_hub_connected_hub_array[]
+    # all cities related to destination hub
     dest_hub_city_list = get_hub_city_list(dest_hub)
+    # all cities related to origin hub
     origin_hub_city_list = get_hub_city_list(origin_hub)
 
     if not (origin_code not in origin_hub_city_list and dest_code not in
-            dest_hub_city_list and origin_hub = dest_hub):
+            dest_hub_city_list and origin_hub == dest_hub):
         return 0
 
     # CONDITION 1
@@ -102,49 +103,33 @@ def main(input_origin, input_destination):
         if origin_route_name != dest_route_name:
             # WHAT DEOS THIS MEANS ? IS IT LIKE ORIGIN PART OF ORIGIN
             # CITY ROUTE LIST ?
-            if origin_code = origin_route_city_list and dest_code = dest_route_city_list:
-                total_weight=sum(weights)
-                Total_amount=sum(amount)
-                CPK = (total_amount/total_weight)
+            if origin_code in origin_route_city_list and dest_code in dest_route_city_list:
+                CPK = calculate_cpk(sum(amount), sum(weight)):
             else
-                if origin_code = origin_route_city_list and dest_code = dest_route_city_list:
-                    total_weight=sum(weights)
-                    Total_amount=sum(amount)
-                    CPK = (total_amount/total_weight)
+                if origin_code in origin_route_city_list and dest_code in dest_route_city_list:
+                    CPK = calculate_cpk(sum(amount), sum(weight)):
                 # HERE IT CONTRADICT, SINCE THE ENTIRE BLOCK RUN WITH
                 # THE ASSUMPTION THAT ORIGIN AND DESTINATION HAS ROUTE
                 # : REFER THIRD IF CONDITION, LINE NUMBER 75
                 else origin_has_route and not dest_has_route:
                     # 'array of all cities that come under get_route_name(input_origin)'
                     if origin_code = origin_route_city_list and dest_code = input_destination:
-                        total_weight=sum(weights)
-                        Total_amount=sum(amount)
-                        CPK = (total_amount/total_weight)
+                        CPK = calculate_cpk(sum(amount), sum(weight)):
             elif dest_has_route and not origin_has_route:
                 if origin_code = origin_route_city_list and dest_code = dest_route_city_list:
-                    total_weight=sum(weights)
-                    Total_amount=sum(amount)
-                    CPK = (total_amount/total_weight)
+                    CPK = calculate_cpk(sum(amount), sum(weight)):
         elif origin_code in origin_hub_city_list and dest_code in dest_hub_city_list:
-                total_weight=sum(weights)
-                Total_amount=sum(amount)
-                CPK = (total_amount/total_weight)
+            CPK = calculate_cpk(sum(amount), sum(weight)):
     # CONDITION 2
     elif origin_code in origin_hub_city_list and dest_code not in dest_hub_city_list:
         if origin_code in origin_hub_city_list and dest_code == input_destination:
-            total_weight=sum(weights)
-            Total_amount=sum(amount)
-            CPK = total_amount/total_weight
+            CPK = calculate_cpk(sum(amount), sum(weight)):
     # CONDITION 3
     elif origin_code  not in origin_hub_city_list and dest_code in dest_hub_city_list:
         if origin_code == input_origin and dest_code in dest_hub_city_list:
-            total_weight = sum(weights)
-            Total_amount = sum(amount)
-            CPK = total_amount/total_weight
+            CPK = calculate_cpk(sum(amount), sum(weight)):
     # CONDITION 4
     else
-        if origin_code = origin_hub_city_list and dest_code in dest_hub_city_list:
-            total_weight=sum(weights)
-            Total_amount=sum(amount)
-            CPK = (total_amount/total_weight)
+        if origin_code in origin_hub_city_list and dest_code in dest_hub_city_list:
+            CPK = calculate_cpk(sum(amount), sum(weight)):
     return CPK
