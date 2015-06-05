@@ -1,21 +1,14 @@
 
-# PROGRAM LOGIC
-# 2.       Our workbook: This contains our analysis on the weights data.
-# A.      Lanes : This sheet has all the data with lanes, origin and Destination and the weights, amount and CPK asscizted with the lanes.
-# B.      City_code: This has the data for the City_code(x) function.
-# C.      Route_name : this has the data to be returned when route_name(x) function is called.
-# D.      Hub_connected_hub: this has the data which HUB_CONNECTED_HUB[] would be having.
-# E.      City_Array: This sheet has the data w.r.t the city_array[].
 
-# Now about the Our_Workbook algorithm:
+def make_od_pair_excel(od_pair_list):
+    # for every O-D pair there will be a row in 'Lanes' Sheet.
+    # take those rows and add that into a new excel sheet.
+    return 'output.xlsx'
 
-# Input_origin: Input field for Origin from webpage.
-# Input_destiantion: Input for Destination from webpage.
-# Hub(x) : function that returns the 3 letter Hub name for a 3-letter input x.
-# City_code(x): function that returns the 3 letter city_code for a 3-letter input x.
-# route() : Binary function that tells us whether a location falls under any route or not.
-# get_route_name(x): function that searches the route in which ‘x’ city is mapped and returns an array of all cities in that route.
-
+def cross_join(origin_route_city_list, dest_route_city_list):
+    """ Cross join two list of cities """
+    return [(org, dest) for org in origin_route_city_list
+            for dest in dest_route_city_list]
 
 def get_city_code(city_name):
     """ take city name as input and return city code"""
@@ -28,6 +21,13 @@ def get_hub(city_code):
     hub_code = ''
     return hub_code
 
+
+def get_connected_hubs(hub_code):
+    """ All hubs connected to the hub. Read this from 'HUB_CONNECTED_HUB sheet"""
+    hub_list = []
+    return hub_list
+
+
 def get_hub_city_list(hub_code):
     """ take a hub code as input and return back list of cities mapped to the
     hub. This should be read from 'CITY_ARRAY' sheet."""
@@ -35,9 +35,24 @@ def get_hub_city_list(hub_code):
     return city_list
 
 
-def has_route(city_code):
-    """ take a city code as input and return True if a route exist for that
-    city else return False. This will be read from 'ROUTE_NAME' sheet."""
+def get_connected_hub_cities(hub):
+    connected_hubs = get_connected_hubs(hub)
+    city_list = map(get_hub_city_list, connected_hubs)
+    return [item for row in city_list for item in row]
+
+
+def get_hub_cities_cross_join(origin_hubs, dest_hubs):
+    """ take list of origin hubs, and list of destination hubs as input.
+    find out the cities related to each hubs. return cross product of origin
+    hub related cities and destination hub related cities."""
+    origin_cities = map(get_hub_city_list, origin_hubs)
+    dest_cities = map(get_hub_city_list, dest_hubs)
+    return cross_join(origin_cities, dest_cities)
+
+
+def has_city_hub(city_code):
+    """ take a city code as input and return True if a hub exist in that
+    city else return False. This will be read from 'CITY_CODE' sheet."""
     return True
 
 
@@ -52,85 +67,86 @@ def get_route_cities(route_name):
     return []
 
 
-def get_connected_hubs(hub_code):
-    """ All hubs connected to the hub. Read this from 'HUB_CONNECTED_HUB sheet"""
-    return []
-
-
-def get_hub_difference(origin_hub, dest_hub):
-    """ take two hub code as inputs and return set difference of connected hubs
-    of those hubs."""
-    return set(get_connected_hubs(dest_hub)) -
-           set(get_connected_hubs(origin_hub))
-
-
-def calculate_cpk(amount, weight):
-    """ calculate CPK (Charge Per Kilo)"""
-    return float(amount) / float(weight)
-
-
 def main(input_origin, input_destination):
     # get city codes
     origin_code = get_city_code(input_origin)
     dest_code = get_city_code(input_destination)
-    # get origin and dest hub
-    origin_hub = get_hub(input_origin)
-    dest_hub = get_hub(input_destination)
-    # has origin and destination has route ?
-    origin_has_route = has_route(input_origin)
-    dest_has_route = has_route(input_destination)
-    # get route names
-    origin_route_name = get_route_name(input_origin)
-    dest_route_name = get_route_name(input_destination)
 
-    # 'array of all cities that come under get_route_name(input_origin)'
+    # has origin and destination has hub in same city?
+    origin_has_hub = has_city_hub(origin_code)
+    dest_has_hub = has_city_hub(dest_code)
+
+    # get origin and dest hub
+    origin_hub = get_hub(origin_code)
+    dest_hub = get_hub(dest_code)
+
+    origin_hub_list = get_connected_hubs(origin_hub)
+    dest_hub_list = get_connected_hubs(dest_hub)
+
+    # get route names
+    origin_route_name = get_route_name(origin_code)
+    dest_route_name = get_route_name(dest_code)
+
+    # 'array of all cities that come under get_route_name(origin_code)'
     origin_route_city_list = get_route_cities(origin_route_name)
-    # 'array of all cities that come under get_route_name(input_destination)'
+    # 'array of all cities that come under get_route_name(dest_code)'
     dest_route_city_list = get_route_cities(dest_route_name)
 
-    # set difference of connected hubs of origin and destination hubs
-    destination_hub_connected_hub_array = get_hub_difference(origin_hub,
-                                                             dest_hub)
-    # all cities related to destination hub
-    dest_hub_city_list = get_hub_city_list(dest_hub)
-    # all cities related to origin hub
-    origin_hub_city_list = get_hub_city_list(origin_hub)
+    # 'array of all cities the comes under related hubs of origin hub
+    origin_hubs_city_list = get_connected_hub_cities(origin_hub)
+    # 'array of all cities the comes under related hubs of destination hub
+    dest_hubs_city_list = get_connected_hub_cities(dest_hub)
 
-    if not (origin_code not in origin_hub_city_list and dest_code not in
-            dest_hub_city_list and origin_hub == dest_hub):
-        return 0
+    # condition 1: both origin city and dest city does not part of
+    # hub city list (CITY_CODE sheet)
+    if not origin_has_hub and not dest_has_hub:
+        # if and destination are connected to same hub:
+        if origin_hub == dest_hub:
+            #if both route names are different:
+            # take the cartition product of origin city list and
+            # destination list.
+            if origin_route_name != dest_route_name:
+                od_pair_list = cross_join(origin_route_city_list,
+                                          dest_route_city_list)
+            # origin and destination routes are same:
+            # take the cartition product of origin city list.
+            else:
+                od_pair_list = cross_join(origin_route_city_list,
+                                           origin_route_city_list)
 
-    # CONDITION 1
-    if origin_has_route and dest_has_route:
-        if origin_route_name != dest_route_name:
-            # WHAT DEOS THIS MEANS ? IS IT LIKE ORIGIN PART OF ORIGIN
-            # CITY ROUTE LIST ?
-            if origin_code in origin_route_city_list and dest_code in dest_route_city_list:
-                CPK = calculate_cpk(sum(amount), sum(weight)):
-            else
-                if origin_code in origin_route_city_list and dest_code in dest_route_city_list:
-                    CPK = calculate_cpk(sum(amount), sum(weight)):
-                # HERE IT CONTRADICT, SINCE THE ENTIRE BLOCK RUN WITH
-                # THE ASSUMPTION THAT ORIGIN AND DESTINATION HAS ROUTE
-                else origin_has_route and not dest_has_route:
-                    # 'array of all cities that come under get_route_name(input_origin)'
-                    if origin_code = origin_route_city_list and dest_code = input_destination:
-                        CPK = calculate_cpk(sum(amount), sum(weight)):
-            elif dest_has_route and not origin_has_route:
-                if origin_code = origin_route_city_list and dest_code = dest_route_city_list:
-                    CPK = calculate_cpk(sum(amount), sum(weight)):
-        elif origin_code in origin_hub_city_list and dest_code in dest_hub_city_list:
-            CPK = calculate_cpk(sum(amount), sum(weight)):
-    # CONDITION 2
-    elif origin_code in origin_hub_city_list and dest_code not in dest_hub_city_list:
-        if origin_code in origin_hub_city_list and dest_code == input_destination:
-            CPK = calculate_cpk(sum(amount), sum(weight)):
-    # CONDITION 3
-    elif origin_code  not in origin_hub_city_list and dest_code in dest_hub_city_list:
-        if origin_code == input_origin and dest_code in dest_hub_city_list:
-            CPK = calculate_cpk(sum(amount), sum(weight)):
-    # CONDITION 4
-    else
-        if origin_code in origin_hub_city_list and dest_code in dest_hub_city_list:
-            CPK = calculate_cpk(sum(amount), sum(weight)):
-    return CPK
+
+        else: # not part of same hub
+            # 1. get all cities of origin route - origin_route_city_list
+            # 2. get all cities of destination route - dest_route_city_list
+            # 3. find cartition cross product of origin_route_cities * dest_route_cities - 1 st lane list
+            first_lane_list = cross_join(origin_route_city_list,
+                                         dest_route_city_list)
+            # 4. get all hubs related to origin hub. - A - excluding origin hub
+            # - origin_hub_list
+            # 5. get all hubs related to destination hub. - B - dest_hub_list
+            # 6. all cities of (A - B) * all cities of (B - A) - 2 nd lane list
+            temp_origin_hub_list = get_connected_hubs(origin_hub)
+            temp_origin_hub_list.remove(origin_hub)
+
+            origin_hubs = list(set(temp_origin_hub_list) - set(dest_hub_list))
+            dest_hubs = list(set(dest_hub_list) - set(origin_hub_list))
+
+            second_lane_list = get_hub_cities_cross_join(origin_hubs, dest_hubs)
+            # 7. append 5 and 6 and get sum of weights of all these lanes from 'Lanes' sheet
+            od_pair_list = first_lane_list + second_lane_list
+
+    # condition 2: origin part of CITY_CODE sheet and destination city not
+    elif origin_has_hub and not dest_has_hub:
+        temp_dest_city_list = dest_hubs_city_list + dest_route_city_list
+        od_pair_list = cross_join(origin_hubs_city_list, temp_dest_city_list)
+
+    elif not origin_has_hub and dest_has_hub:
+        temp_origin_city_list = origin_hubs_city_list + origin_route_city_list
+        od_pair_list = cross_join(temp_origin_city_list, dest_hubs_city_list)
+
+    else: # both origin and destination has hub
+        od_pair_list = cross_join(origin_hubs_city_list, dest_hubs_city_list)
+
+    file_name = make_od_pair_excel(od_pair_list)
+    print file_name
+    return file_name
