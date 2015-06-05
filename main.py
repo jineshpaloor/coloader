@@ -23,6 +23,9 @@ hub_connected_hub_mapping = defaultdict(list)
 # = {'CJH': 'CJT', ..} # city_code sheet
 # city_has_hub_mapping
 
+lane_dict = {}
+
+
 def make_city_hub_mapping():
     """ city_hub_mapping = {'AHD': {'hub':'AHH', 'route':'AHD', 'has_hub': True}, .....}"""
     # creating hub city list mapping
@@ -79,22 +82,36 @@ def make_city_hub_mapping():
             route_name = cleaned_column[0]
             routename_cities_mapping[route_name] = cleaned_column[1:]
 
+    lanes_sheet = wb.sheet_by_name('Lanes')
+    origin_list = lanes_sheet.col_values(4)[1:]
+    origin_list = [x.strip() for x in origin_list if x]
+    dest_list = lanes_sheet.col_values(5)[1:]
+    dest_list = [x.strip() for x in dest_list if x]
+    weight_list = lanes_sheet.col_values(10)[1:]
+
+    data = zip(origin_list, dest_list, weight_list)
+    for o, d, w in data:
+        lane_dict['{0}-{1}'.format(o, d)] = float(w)
 
     return True
 
-def read_lanes_sheet(origin, destination):
-    lanes_sheet = wb.sheet_by_name('Lanes')
-    return 0
+
+def get_lane_weight(origin, dest):
+    """ take origin and destination city codes as input and return lane
+    weight"""
+    od = '{0}-{1}'.format(origin, dest)
+    return lane_dict.get(od, 0)
 
 
 def make_od_pair_excel(od_pair_list):
     # for every O-D pair there will be a row in 'Lanes' Sheet.
     # take those rows and add that into a new excel sheet.
+
     report = ReportGenerator('output.xlsx')
     report.write_header(('Origin', 'Destination', 'Weight'))
 
     for origin, destination in od_pair_list:
-        weight = read_lanes_sheet(origin, destination)
+        weight = get_lane_weight(origin, destination)
         report.write_row((origin, destination, weight))
 
     report.manual_sheet_close()
@@ -123,7 +140,15 @@ def get_hub_city_list(hub_code):
     return hub_city_list_mapping.get(hub_code)
 
 
+def get_hubs_city_list(hubs):
+    """ take a hub code as input and return back list of cities mapped to the
+    hub. This should be read from 'CITY_ARRAY' sheet."""
+    result = map(get_hub_city_list, hubs)
+    return [item for row in result for item in row]
+
+
 def get_connected_hub_cities(hub):
+    """ get cities of connected hubs of input hub"""
     connected_hubs = get_connected_hubs(hub)
     city_list = map(get_hub_city_list, connected_hubs)
     return [item for row in city_list for item in row if row]
@@ -166,6 +191,9 @@ def main(origin_code, dest_code):
     origin_hub_list = get_connected_hubs(origin_hub)
     dest_hub_list = get_connected_hubs(dest_hub)
 
+    origin_hub_city_list = get_hub_city_list(origin_hub)
+    dest_hub_city_list = get_hub_city_list(dest_hub)
+
     # LKH Exception
     if 'LKH' in origin_hub_list:
         for h in dest_hub_list:
@@ -177,16 +205,14 @@ def main(origin_code, dest_code):
     origin_route_name = get_route_name(origin_code)
     dest_route_name = get_route_name(dest_code)
 
-
-    print 'Origin has hub         :', origin_has_hub
-    print 'Destination has hub    :', dest_has_hub
-    print 'Origin hub             :', origin_hub
-    print 'Destination hub        :', dest_hub
-    print 'Origin hub list        :', origin_hub_list
-    print 'Destination hub list   :', dest_hub_list
-    print 'Origin route name      :', origin_route_name
-    print 'Destination route name :', dest_route_name
-
+    # print 'Origin has hub         :', origin_has_hub
+    # print 'Destination has hub    :', dest_has_hub
+    # print 'Origin hub             :', origin_hub
+    # print 'Destination hub        :', dest_hub
+    # print 'Origin hub list        :', origin_hub_list
+    # print 'Destination hub list   :', dest_hub_list
+    # print 'Origin route name      :', origin_route_name
+    # print 'Destination route name :', dest_route_name
 
     # 'array of all cities that come under get_route_name(origin_code)'
     origin_route_city_list = get_route_cities(origin_route_name)
@@ -201,6 +227,7 @@ def main(origin_code, dest_code):
     # condition 1: both origin city and dest city does not part of
     # hub city list (CITY_CODE sheet)
     if not origin_has_hub and not dest_has_hub:
+        print '1'
         # if and destination are connected to same hub:
         if origin_hub == dest_hub:
             #if both route names are different:
@@ -219,17 +246,16 @@ def main(origin_code, dest_code):
         else: # not part of same hub
             # 1. get all cities of origin route - origin_route_city_list
             # 2. get all cities of destination route - dest_route_city_list
-            # 3. find cartition cross product of origin_route_cities * dest_route_cities - 1 st lane list
+            # 3. find cartition cross product of
+            # origin_route_cities * dest_route_cities - 1 st lane list
             first_lane_list = cross_join(origin_route_city_list,
                                          dest_route_city_list)
-            # 4. get all hubs related to origin hub. - A - excluding origin hub
+            # 4. get all hubs related to origin hub. - A
             # - origin_hub_list
             # 5. get all hubs related to destination hub. - B - dest_hub_list
             # 6. all cities of (A - B) * all cities of (B - A) - 2 nd lane list
-            temp_origin_hub_list = get_connected_hubs(origin_hub)
-            temp_origin_hub_list.remove(origin_hub)
 
-            origin_hubs = list(set(temp_origin_hub_list) - set(dest_hub_list))
+            origin_hubs = list(set(origin_hub_list) - set(dest_hub_list))
             dest_hubs = list(set(dest_hub_list) - set(origin_hub_list))
 
             second_lane_list = get_hub_cities_cross_join(origin_hubs, dest_hubs)
@@ -238,15 +264,44 @@ def main(origin_code, dest_code):
 
     # condition 2: origin part of CITY_CODE sheet and destination city not
     elif origin_has_hub and not dest_has_hub:
-        temp_dest_city_list = dest_hubs_city_list + dest_route_city_list
-        od_pair_list = cross_join(origin_hubs_city_list, temp_dest_city_list)
+        if origin_hub == dest_hub:
+            temp_origin_hubs = origin_hub_list
+            temp_dest_hubs = dest_hub_list
+        else:
+            temp_origin_hubs = list(set(origin_hub_list) - set(dest_hub_list))
+            temp_dest_hubs = list(set(dest_hub_list) - set(origin_hub_list))
 
+        temp_origin_city_list = get_hubs_city_list(temp_origin_hubs) + origin_hub_city_list
+        temp_dest_city_list = get_hubs_city_list(temp_dest_hubs) + dest_route_city_list + dest_hub_city_list
+
+        od_pair_list = cross_join(temp_origin_city_list, temp_dest_city_list)
+
+    # condition 3: origin not part of CITY_CODE sheet and destination city is
     elif not origin_has_hub and dest_has_hub:
-        temp_origin_city_list = origin_hubs_city_list + origin_route_city_list
-        od_pair_list = cross_join(temp_origin_city_list, dest_hubs_city_list)
+        if origin_hub == dest_hub:
+            temp_origin_hubs = origin_hub_list
+            temp_dest_hubs = dest_hub_list
+        else:
+            temp_origin_hubs = list(set(origin_hub_list) - set(dest_hub_list))
+            temp_dest_hubs = list(set(dest_hub_list) - set(origin_hub_list))
 
+        temp_origin_city_list = get_hubs_city_list(temp_origin_hubs) + origin_hub_city_list + origin_route_city_list
+        temp_dest_city_list = get_hubs_city_list(temp_dest_hubs) + dest_hub_city_list
+
+        od_pair_list = cross_join(temp_origin_city_list, temp_dest_city_list)
+
+    # condition 4:
     else: # both origin and destination has hub
-        od_pair_list = cross_join(origin_hubs_city_list, dest_hubs_city_list)
+        if origin_hub == dest_hub:
+            temp_origin_hubs = origin_hub_list
+            temp_dest_hubs = dest_hub_list
+        else:
+            temp_origin_hubs = list(set(origin_hub_list) - set(dest_hub_list))
+            temp_dest_hubs = list(set(dest_hub_list) - set(origin_hub_list))
+
+        temp_origin_city_list = origin_hub_city_list + get_hubs_city_list(temp_origin_hubs)
+        temp_dest_city_list = origin_hub_city_list + get_hubs_city_list(temp_dest_hubs)
+        od_pair_list = cross_join(temp_origin_city_list, temp_dest_city_list)
 
     file_name = make_od_pair_excel(od_pair_list)
     return file_name
