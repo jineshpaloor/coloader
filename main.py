@@ -1,44 +1,132 @@
+import xlrd
+from collections import defaultdict
+from report_api import ReportGenerator
+
+wb = xlrd.open_workbook('project.xls')
+
+# dictionary holding city to hub and routename mapping
+# city_hub_mapping = {'AHD': {'hub':'AHH', 'route':'AHD'}, .....}
+city_hub_mapping = defaultdict(dict)
+
+# all cities mapped to particular route
+# {'AHD': ['AHD',.],  ...}
+routename_cities_mapping = defaultdict(list)
+
+# hub to city mapping
+# = {'SXR': [ 'GND', 'SOO', 'ANA', 'KUL', 'BUD', 'BAA', 'SYN'], ..}
+hub_city_list_mapping = defaultdict(list)
+
+# list of hubs connected to one hub
+# = {'VTZ': ['DEH', 'HNH', 'HYH']}
+hub_connected_hub_mapping = defaultdict(list)
+
+# = {'CJH': 'CJT', ..} # city_code sheet
+# city_has_hub_mapping
+
+def make_city_hub_mapping():
+    """ city_hub_mapping = {'AHD': {'hub':'AHH', 'route':'AHD', 'has_hub': True}, .....}"""
+    # creating hub city list mapping
+    city_array_sheet = wb.sheet_by_name('CITY_ARRAY')
+    cols_count = city_array_sheet.ncols
+
+    for col in range(cols_count):
+        hub_city_list = city_array_sheet.col_values(col)
+        cleaned_column = [x for x in hub_city_list if x]
+        if cleaned_column:
+            hub_name = cleaned_column[0]
+            hub_city_list_mapping[hub_name] = cleaned_column[1:]
+
+    # creating city - hub - route mapping
+    lookup_sheet = wb.sheet_by_name('lookup sheet')
+    city_codes = lookup_sheet.col_values(1)[1:]
+    route_names = lookup_sheet.col_values(3)[1:]
+    hubs = lookup_sheet.col_values(5)[1:]
+    data = zip(city_codes, route_names, hubs)
+
+    for city, route, hub in data:
+        city_hub_mapping[city]['has_hub'] = False
+        city_hub_mapping[city]['hub'] = hub
+        city_hub_mapping[city]['route'] = route
+
+
+    # creating hub connected hub mapping
+    hub_connected_hub_sheet = wb.sheet_by_name('HUB_CONNECTED_HUB')
+    cols_count = hub_connected_hub_sheet.ncols
+    for col in range(cols_count):
+        data_list = hub_connected_hub_sheet.col_values(col)
+        cleaned_column = [x for x in data_list if x]
+        if cleaned_column:
+            hub_name = cleaned_column[0]
+            cleaned_cities = filter(lambda x: x.strip(), cleaned_column[1:])
+            hub_connected_hub_mapping[hub_name] = cleaned_cities
+
+    # updating the city_hub boolean
+    city_code_sheet = wb.sheet_by_name('CITY_CODE')
+    hubs = city_code_sheet.col_values(0)[1:]
+    cities = city_code_sheet.col_values(1)[1:]
+    data = zip(hubs, cities)
+
+    for h, c in data:
+        city_hub_mapping[c]['has_hub'] = True
+
+    # creating route city list mapping
+    route_name_sheet = wb.sheet_by_name('ROUTE_NAME')
+    cols_count = route_name_sheet.ncols
+    for col in range(cols_count):
+        data_list = route_name_sheet.col_values(col)
+        cleaned_column = [x for x in data_list if x]
+        if cleaned_column:
+            route_name = cleaned_column[0]
+            routename_cities_mapping[route_name] = cleaned_column[1:]
+
+
+    return True
+
+def read_lanes_sheet(origin, destination):
+    lanes_sheet = wb.sheet_by_name('Lanes')
+    return 0
 
 
 def make_od_pair_excel(od_pair_list):
     # for every O-D pair there will be a row in 'Lanes' Sheet.
     # take those rows and add that into a new excel sheet.
-    return 'output.xlsx'
+    report = ReportGenerator('output.xlsx')
+    report.write_header(('Origin', 'Destination', 'Weight'))
+
+    for origin, destination in od_pair_list:
+        weight = read_lanes_sheet(origin, destination)
+        report.write_row((origin, destination, weight))
+
+    report.manual_sheet_close()
+    return report.file_name
+
 
 def cross_join(origin_route_city_list, dest_route_city_list):
     """ Cross join two list of cities """
     return [(org, dest) for org in origin_route_city_list
             for dest in dest_route_city_list]
 
-def get_city_code(city_name):
-    """ take city name as input and return city code"""
-    city_code = ''
-    return city_code
-
 
 def get_hub(city_code):
     """ take city code as input and return the hub it belongs to"""
-    hub_code = ''
-    return hub_code
+    return city_hub_mapping.get(city_code).get('hub')
 
 
 def get_connected_hubs(hub_code):
     """ All hubs connected to the hub. Read this from 'HUB_CONNECTED_HUB sheet"""
-    hub_list = []
-    return hub_list
+    return hub_connected_hub_mapping.get(hub_code)
 
 
 def get_hub_city_list(hub_code):
     """ take a hub code as input and return back list of cities mapped to the
     hub. This should be read from 'CITY_ARRAY' sheet."""
-    city_list = "All cities mapped to the hub"
-    return city_list
+    return hub_city_list_mapping.get(hub_code)
 
 
 def get_connected_hub_cities(hub):
     connected_hubs = get_connected_hubs(hub)
     city_list = map(get_hub_city_list, connected_hubs)
-    return [item for row in city_list for item in row]
+    return [item for row in city_list for item in row if row]
 
 
 def get_hub_cities_cross_join(origin_hubs, dest_hubs):
@@ -53,25 +141,20 @@ def get_hub_cities_cross_join(origin_hubs, dest_hubs):
 def has_city_hub(city_code):
     """ take a city code as input and return True if a hub exist in that
     city else return False. This will be read from 'CITY_CODE' sheet."""
-    return True
+    return city_hub_mapping.get(city_code).get('has_hub')
 
 
 def get_route_name(city_code):
     """ take city code as input and return the route name it belongs to"""
-    route_name = ''
-    return route_name
+    return city_hub_mapping.get(city_code).get('route')
 
 
 def get_route_cities(route_name):
     """ take route name as input and return all cities under that route"""
-    return []
+    return routename_cities_mapping.get(route_name)
 
 
-def main(input_origin, input_destination):
-    # get city codes
-    origin_code = get_city_code(input_origin)
-    dest_code = get_city_code(input_destination)
-
+def main(origin_code, dest_code):
     # has origin and destination has hub in same city?
     origin_has_hub = has_city_hub(origin_code)
     dest_has_hub = has_city_hub(dest_code)
@@ -83,9 +166,27 @@ def main(input_origin, input_destination):
     origin_hub_list = get_connected_hubs(origin_hub)
     dest_hub_list = get_connected_hubs(dest_hub)
 
+    # LKH Exception
+    if 'LKH' in origin_hub_list:
+        for h in dest_hub_list:
+            if 'LKH' in get_connected_hubs(h):
+                origin_hub_list.remove('LKH')
+                break
+
     # get route names
     origin_route_name = get_route_name(origin_code)
     dest_route_name = get_route_name(dest_code)
+
+
+    print 'Origin has hub         :', origin_has_hub
+    print 'Destination has hub    :', dest_has_hub
+    print 'Origin hub             :', origin_hub
+    print 'Destination hub        :', dest_hub
+    print 'Origin hub list        :', origin_hub_list
+    print 'Destination hub list   :', dest_hub_list
+    print 'Origin route name      :', origin_route_name
+    print 'Destination route name :', dest_route_name
+
 
     # 'array of all cities that come under get_route_name(origin_code)'
     origin_route_city_list = get_route_cities(origin_route_name)
@@ -148,5 +249,9 @@ def main(input_origin, input_destination):
         od_pair_list = cross_join(origin_hubs_city_list, dest_hubs_city_list)
 
     file_name = make_od_pair_excel(od_pair_list)
-    print file_name
     return file_name
+
+
+if __name__ == '__main__':
+    make_city_hub_mapping()
+    main('DEL', 'SAL')

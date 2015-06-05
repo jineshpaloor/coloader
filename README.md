@@ -52,3 +52,15 @@ condition 4: both origin city and dest city are part of hub city list (CITY_CODE
     6. cities of all these hubs - DCL = cities(DH + DHL)
     7. take cartition cross product of  OCL * DCL and get sum of weights of all these lanes from 'Lanes' sheet
 
+
+data structures used
+--------------------
+    city_hub_mapping = {'AHD': {'hub':'AHH', 'route':'AHD'}, .....}
+
+    hub_connected_hub_mapping = {'VTZ': ['DEH', 'HNH', 'HYH']}
+
+    hub_city_list_mapping = {'SXR': [ 'GND', 'SOO', 'ANA', 'KUL', 'BUD', 'BAA', 'SYN'], ..}
+
+    city_has_hub_mapping = {'CJH': 'CJT', ..} # city_code sheet
+
+    routename_cities_mapping = {'AHD': ['AHD',.],  ...}
