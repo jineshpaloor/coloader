@@ -1,5 +1,5 @@
 condition 1: both origin city and dest city does not part of hub city list (CITY_CODE sheet)
-============================================================================================
+--------------------------------------------------------------------------------------------
 
     if origin and destination are connected to same hub:
         if both route names are different:
@@ -24,7 +24,7 @@ condition 1: both origin city and dest city does not part of hub city list (CITY
         7. append 5 and 6 and get sum of weights of all these lanes from 'Lanes' sheet
 
 condition 2: origin part of CITY_CODE sheet and destination city not
-===================================================================
+-------------------------------------------------------------------
     1. get origin hub - OH
     2. get all the connected hubs from HUB_CONNECTED_HUB sheet - OHL
     3. cities of all these hubs - OCL = cities(OH + OHL)
@@ -38,12 +38,12 @@ condition 2: origin part of CITY_CODE sheet and destination city not
 
 
 condition 3: destination part of CITY_CODE sheet and origin city not
-===================================================================
+-------------------------------------------------------------------
     - reverse of the above codition
 
 
 condition 4: both origin city and dest city are part of hub city list (CITY_CODE sheet)
-=======================================================================================
+---------------------------------------------------------------------------------------
     1. get origin hub - OH
     2. get all the connected hubs from HUB_CONNECTED_HUB sheet - OHL
     3. cities of all these hubs - OCL = cities(OH + OHL)
