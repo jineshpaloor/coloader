@@ -103,6 +103,14 @@ def get_lane_weight(origin, dest):
     return lane_dict.get(od, 0)
 
 
+def get_od_pair_sum(od_pair_list):
+    weight_list = []
+    for origin, destination in od_pair_list:
+        weight = get_lane_weight(origin, destination)
+        weight_list.append(weight)
+    return sum([x for x in weight_list if x])
+
+
 def make_od_pair_excel(od_pair_list):
     # for every O-D pair there will be a row in 'Lanes' Sheet.
     # take those rows and add that into a new excel sheet.
@@ -120,8 +128,11 @@ def make_od_pair_excel(od_pair_list):
 
 def cross_join(origin_route_city_list, dest_route_city_list):
     """ Cross join two list of cities """
-    return [(org, dest) for org in origin_route_city_list
+    if origin_route_city_list and dest_route_city_list:
+        return [(org, dest) for org in origin_route_city_list
             for dest in dest_route_city_list]
+    else:
+        return []
 
 
 def get_hub(city_code):
@@ -131,13 +142,13 @@ def get_hub(city_code):
 
 def get_connected_hubs(hub_code):
     """ All hubs connected to the hub. Read this from 'HUB_CONNECTED_HUB sheet"""
-    return hub_connected_hub_mapping.get(hub_code)
+    return hub_connected_hub_mapping.get(hub_code, [])
 
 
 def get_hub_city_list(hub_code):
     """ take a hub code as input and return back list of cities mapped to the
     hub. This should be read from 'CITY_ARRAY' sheet."""
-    return hub_city_list_mapping.get(hub_code)
+    return hub_city_list_mapping.get(hub_code, [])
 
 
 def get_hubs_city_list(hubs):
@@ -176,7 +187,7 @@ def get_route_name(city_code):
 
 def get_route_cities(route_name):
     """ take route name as input and return all cities under that route"""
-    return routename_cities_mapping.get(route_name)
+    return routename_cities_mapping.get(route_name, [])
 
 
 def main(origin_code, dest_code):
@@ -199,6 +210,20 @@ def main(origin_code, dest_code):
         for h in dest_hub_list:
             if 'LKH' in get_connected_hubs(h):
                 origin_hub_list.remove('LKH')
+                break
+
+    # AHH Exception
+    if 'AHH' in origin_hub_list:
+        for h in dest_hub_list:
+            if 'AHH' in get_connected_hubs(h):
+                origin_hub_list.remove('AHH')
+                break
+
+    # JAH Exception
+    if 'JAH' in origin_hub_list:
+        for h in dest_hub_list:
+            if 'JAH' in get_connected_hubs(h):
+                origin_hub_list.remove('JAH')
                 break
 
     # get route names
@@ -227,7 +252,6 @@ def main(origin_code, dest_code):
     # condition 1: both origin city and dest city does not part of
     # hub city list (CITY_CODE sheet)
     if not origin_has_hub and not dest_has_hub:
-        print '1'
         # if and destination are connected to same hub:
         if origin_hub == dest_hub:
             #if both route names are different:
@@ -303,10 +327,24 @@ def main(origin_code, dest_code):
         temp_dest_city_list = origin_hub_city_list + get_hubs_city_list(temp_dest_hubs)
         od_pair_list = cross_join(temp_origin_city_list, temp_dest_city_list)
 
-    file_name = make_od_pair_excel(od_pair_list)
-    return file_name
+    # file_name = make_od_pair_excel(od_pair_list)
+    total = get_od_pair_sum(od_pair_list)
+    return total
 
 
 if __name__ == '__main__':
     make_city_hub_mapping()
-    main('DEL', 'SAL')
+    # org_code = raw_input("Enter Origin City Code      :")
+    # dest_code = raw_input("Enter Destination City Code :")
+    # main(org_code, dest_code)
+
+    report = ReportGenerator('od_output.xlsx')
+    report.write_header(('Origin', 'Destination', 'Weight'))
+
+    all_cities = city_hub_mapping.keys()
+    for org in all_cities:
+        for dest in all_cities:
+            tot_weight = main(org, dest)
+            report.write_row((org, dest, tot_weight))
+    report.manual_sheet_close()
+    print report.file_name
